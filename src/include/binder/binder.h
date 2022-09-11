@@ -36,14 +36,6 @@
 
 #include <string>
 
-#include "binder/simplified_token.h"
-#include "binder/statement/create_statement.h"
-#include "catalog/column.h"
-#include "common/macros.h"
-#include "nodes/parsenodes.hpp"
-#include "type/type_id.h"
-#include "type/value.h"
-
 #include "binder/binder.h"
 #include "binder/bound_statement.h"
 #include "binder/expressions/bound_agg_call.h"
@@ -52,16 +44,25 @@
 #include "binder/expressions/bound_constant.h"
 #include "binder/expressions/bound_star.h"
 #include "binder/expressions/bound_unary_op.h"
+#include "binder/simplified_token.h"
+#include "binder/statement/create_statement.h"
+#include "binder/statement/insert_statement.h"
 #include "binder/statement/select_statement.h"
 #include "binder/table_ref/bound_base_table_ref.h"
 #include "binder/table_ref/bound_cross_product_ref.h"
+#include "binder/table_ref/bound_expression_list_ref.h"
 #include "binder/table_ref/bound_join_ref.h"
 #include "binder/tokens.h"
 #include "catalog/catalog.h"
+#include "catalog/column.h"
+#include "common/macros.h"
 #include "common/util/string_util.h"
 #include "fmt/format.h"
+#include "nodes/parsenodes.hpp"
 #include "pg_definitions.hpp"
 #include "postgres_parser.hpp"
+#include "type/type_id.h"
+#include "type/value.h"
 
 namespace duckdb_libpgquery {
 struct PGList;
@@ -159,6 +160,10 @@ class Binder {
 
   auto ResolveColumn(const BoundTableRef &scope, const std::vector<std::string> &col_name)
       -> std::unique_ptr<BoundExpression>;
+
+  auto BindInsert(duckdb_libpgquery::PGInsertStmt *pg_stmt) -> std::unique_ptr<InsertStatement>;
+
+  auto BindValuesList(duckdb_libpgquery::PGList *list) -> std::unique_ptr<BoundExpressionListRef>;
 
   class ContextGuard {
    public:
