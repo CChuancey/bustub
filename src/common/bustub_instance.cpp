@@ -92,6 +92,7 @@ auto BustubInstance::ExecuteSql(const std::string &sql) -> std::vector<std::stri
         const auto &create_stmt = dynamic_cast<const CreateStatement &>(*statement);
         auto txn = transaction_manager_->Begin();
         catalog_->CreateTable(txn, create_stmt.table_, Schema(create_stmt.columns_));
+        transaction_manager_->Commit(txn);
         delete txn;
         continue;
       }
@@ -111,11 +112,15 @@ auto BustubInstance::ExecuteSql(const std::string &sql) -> std::vector<std::stri
     std::vector<Tuple> result_set{};
     execution_engine_->Execute(planner.plan_.get(), &result_set, txn, exec_ctx.get());
 
-    // TODO(chi): decide commit or abort the transaction after trasnalction manager is implemented.
+    transaction_manager_->Commit(txn);
     delete txn;
 
     // Return the result set as a vector of string.
     auto schema = planner.plan_->OutputSchema();
+
+    if (schema == nullptr) {
+      continue;
+    }
 
     // Generate header for the result set.
     std::string header;
@@ -149,7 +154,7 @@ void BustubInstance::GenerateTestTable() {
   TableGenerator gen{exec_ctx.get()};
   gen.GenerateTestTables();
 
-  // TODO(chi): decide commit or abort the transaction after trasnalction manager is implemented.
+  transaction_manager_->Commit(txn);
   delete txn;
 }
 
@@ -164,7 +169,7 @@ void BustubInstance::GenerateMockTable() {
   auto mock_table_1_schema = Schema(mock_table_1_columns);
   catalog_->CreateTable(txn, "__mock_table_1", mock_table_1_schema, false);
 
-  // TODO(chi): decide commit or abort the transaction after trasnalction manager is implemented.
+  transaction_manager_->Commit(txn);
   delete txn;
 }
 

@@ -74,7 +74,6 @@ auto Planner::PlanBaseTableRef(const BoundBaseTableRef &table_ref) -> std::uniqu
     if (StringUtil::StartsWith(table->name_, "__mock")) {
       return std::make_unique<MockScanPlanNode>(SaveSchema(MakeOutputSchema(output_schema)), 100);
     }
-  } else {
     throw bustub::Exception(fmt::format("unsupported internal table: {}", table->name_));
   }
   // Otherwise, plan as normal SeqScan.
