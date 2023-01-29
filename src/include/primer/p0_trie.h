@@ -289,56 +289,51 @@ class Trie {
     if (key.empty()) {
       return false;
     }
-    bool exist = false;
-    // 泛型函数需要传入类型！！
-    GetValue<T>(key, &exist);
-    if (exist) {
-      return false;
-    }
+    // bool exist = false;
+    // // 泛型函数需要传入类型！！
+    // GetValue<T>(key, &exist);
+    // if (exist) {
+    //   return false;
+    // }
 
     // 读写锁控制并发
     latch_.WLock();
     std::unique_ptr<TrieNode> *pre_node = &root_;
 
-    std::string::size_type index = 0;
-    for (auto chr : key) {
-      index++;
+    for (std::string::size_type i = 0; i < key.length(); i++) {
+      auto chr = key[i];
       auto *curr_node = (*pre_node)->GetChildNode(chr);
 
-      // 未到末尾
-      if (index < key.length()) {
-        if (!curr_node) {
-          auto node = std::make_unique<TrieNode>(chr);
+      if (i + 1 == key.length()) {  // 末尾
+        // 1. 不存在
+        if (curr_node == nullptr) {
+          auto node = std::make_unique<TrieNodeWithValue<T>>(chr, value);
           pre_node = (*pre_node)->InsertChildNode(chr, std::move(node));
-        } else {
-          pre_node = curr_node;
+          latch_.WUnlock();
+          return !!pre_node;
         }
-        continue;
+        // 2. 非叶子结点
+        if (!(*curr_node)->IsEndNode()) {
+          // release 释放ownership
+          TrieNodeWithValue<T> node(std::move(*(*curr_node)), value);
+          (*pre_node)->RemoveChildNode(chr);
+          pre_node = (*pre_node)->InsertChildNode(chr, std::make_unique<TrieNodeWithValue<T>>(std::move(node), value));
+          latch_.WUnlock();
+          return !!pre_node;
+        }
+        latch_.WUnlock();
+        return false;
       }
 
-      // 1. 不存在
       if (!curr_node) {
-        auto node = std::make_unique<TrieNodeWithValue<T>>(chr, value);
-        (*pre_node)->InsertChildNode(chr, std::move(node));
-        latch_.RUnlock();
-        return true;
+        auto node = std::make_unique<TrieNode>(chr);
+        pre_node = (*pre_node)->InsertChildNode(chr, std::move(node));
+      } else {
+        pre_node = curr_node;
       }
-
-      // 2. 当前node不是尾结点
-      if (!(*curr_node)->IsEndNode()) {
-        // release 释放ownership
-        TrieNodeWithValue<T> node(std::move(*curr_node->release()), value);
-        (*pre_node)->InsertChildNode(chr, std::make_unique<TrieNodeWithValue<T>>(std::move(node), value));
-        latch_.RUnlock();
-        return true;
-      }
-
-      // 3. 已经存在
-      latch_.RUnlock();
-      return false;
     }
 
-    latch_.RUnlock();
+    latch_.WUnlock();
     return false;
   }
 
@@ -397,7 +392,7 @@ class Trie {
     latch_.RLock();
     auto *pre_node = &root_;
 
-    auto *curr_node = (*pre_node)->GetChildNode(key[0]);
+    std::unique_ptr<TrieNode> *curr_node = nullptr;
     for (auto chr : key) {
       curr_node = (*pre_node)->GetChildNode(chr);
       if (!curr_node) {
