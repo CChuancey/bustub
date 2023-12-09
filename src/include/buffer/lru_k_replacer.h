@@ -12,9 +12,11 @@
 
 #pragma once
 
+#include <cstddef>
 #include <limits>
 #include <list>
 #include <mutex>  // NOLINT
+#include <queue>
 #include <unordered_map>
 #include <vector>
 
@@ -135,10 +137,18 @@ class LRUKReplacer {
  private:
   // TODO(student): implement me! You can replace these member variables as you like.
   // Remove maybe_unused if you start using them.
-  [[maybe_unused]] size_t current_timestamp_{0};
-  [[maybe_unused]] size_t curr_size_{0};
-  [[maybe_unused]] size_t replacer_size_;
-  [[maybe_unused]] size_t k_;
+  size_t current_timestamp_{0};
+  size_t curr_size_{0};  // 记录的是evictable的frame的个数
+  size_t replacer_size_;
+  size_t k_;
+
+  struct Frameinfo {
+    bool evictable_;
+    std::queue<size_t> time_sequence_;
+  };
+
+  std::unordered_map<frame_id_t, Frameinfo> frame_infos_;
+
   std::mutex latch_;
 };
 

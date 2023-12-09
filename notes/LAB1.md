@@ -31,3 +31,11 @@ BucketSize和LocalDepth不是一个东西，BucketSize在一开始就确定好�
 > 情况1增加GlobalDepth，会导致情况2：多个Dir项指向同一个Bucket，需要进一步判断情况2
 > 情况2创建新Bucket，也有可能出现原来n个元素的Bucket，split后，两个Bucket中元素个数分别是0和n的情况
 > 情况1和情况2故要放在while循环中，直到插入成功！
+
+---
+
+### 2. LRU-K算法
+
+lab的难点依然是理解LRU-K算法的理论实现。
+实际是对LRU做的改进，对每个frame增加一个计数（实际是一个访问时间队列），每次访问时，需要更新frame的访问时间队列。
+当需要淘汰frame时，优先选择：frame的访问次数未达到k次的，如果都达到k次，则淘汰所有frame访问最早的frame
