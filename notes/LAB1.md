@@ -39,3 +39,7 @@ BucketSize和LocalDepth不是一个东西，BucketSize在一开始就确定好�
 lab的难点依然是理解LRU-K算法的理论实现。
 实际是对LRU做的改进，对每个frame增加一个计数（实际是一个访问时间队列），每次访问时，需要更新frame的访问时间队列。
 当需要淘汰frame时，优先选择：frame的访问次数未达到k次的，如果都达到k次，则淘汰所有frame访问最早的frame
+
+### 3. BufferPoolManager
+
+缓冲池管理器 BufferPoolManagerInstance 负责从 DiskManager 获取数据库页并将其存储在内存中和将脏页写入磁盘。它使用 ExtendibleHashTable 作为将 page_id 映射到 frame_id 的哈希表，使用 LRUKReplace 跟踪 page 对象的访问时间，在需要释放一个帧给新的 page 腾出空间时由 LRUKReplace 来决定驱逐哪个 page。

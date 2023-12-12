@@ -163,7 +163,8 @@ class BufferPoolManagerInstance : public BufferPoolManager {
   std::mutex latch_;
 
   /**
-   * @brief Allocate a page on disk. Caller should acquire the latch before calling this function.
+   * @brief 仅仅是分配了新的page id Allocate a page on disk. Caller should acquire the latch before calling this
+   * function.
    * @return the id of the allocated page
    */
   auto AllocatePage() -> page_id_t;
